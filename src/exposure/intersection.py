@@ -10,6 +10,8 @@ import geopandas
 
 
 def main():
+    """Read files and do intersections
+    """
     config = load_config()
     base_path = config['base_path']
 
