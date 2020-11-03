@@ -8,6 +8,7 @@ import json
 import os
 
 import geopandas
+from shapely.wkt import dumps
 from tqdm import tqdm
 
 
@@ -30,6 +31,8 @@ def main():
 
     for hazard_path in hazard_paths:
         hazard_id = os.path.basename(hazard_path).replace(".shp", "")
+        # if "medium" in hazard_id: # DEBUG
+        #     continue
 
         print("Processing", hazard_id)
 
@@ -45,39 +48,53 @@ def main():
             base_path, 'results', 'exposure', f"roads__{hazard_id}.csv")
 
         with open(csv_fname, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('road_id', 'hazard_id', 'name', 'length'))
+            w = csv.DictWriter(fh, fieldnames=('road_id', 'hazard_id', 'name', 'length', 'geom'))
             w.writeheader()
 
-            for hazard_id, hazard in tqdm(enumerate(hazard_df.itertuples()), total=len(hazard_df)):
-                # Try fixing invalid geometry
-                if not hazard.geometry.is_valid:
-                    hazard_geom = hazard.geometry.buffer(0)
+            for hazard_n, hazard in enumerate(hazard_df.itertuples()):
+                # if hazard_n != 133485: # DEBUG
+                #     continue
+
+                print("considering", hazard_n)
+                if hazard.geometry.geom_type == 'MultiPolygon':
+                    geoms = [p for p in hazard.geometry]
                 else:
-                    hazard_geom = hazard.geometry
+                    geoms = [hazard.geometry]
 
-                # Use spatial index to find candidate road segments
-                potential_roads = network_df.iloc[
-                    list(network_df.sindex.intersection(hazard_geom.bounds))]
+                for hazard_geom in geoms:
+                    # Try fixing invalid geometry
+                    if not hazard_geom.is_valid:
+                        print("fixing", hazard_n)
+                        hazard_geom = hazard_geom.buffer(0)
+                        print("fixed", hazard_n)
 
-                if len(potential_roads):
-                    for road in tqdm(potential_roads.itertuples(), total=len(potential_roads)):
-                        if road.geometry.intersects(hazard_geom):
-                            intersection_geom = road.geometry.intersection(hazard_geom)
-                            w.writerow({
-                                'road_id': road.ID,
-                                'hazard_id': hazard_id,
-                                'name': road.NAME,
-                                'length': intersection_geom.length
-                            })
-                            intersections.append({
-                                'road_id': road.ID,
-                                'hazard_id': hazard_id,
-                                'name': road.NAME,
-                                'length': intersection_geom.length,
-                                'geometry': intersection_geom
-                            })
+                    # Use spatial index to find candidate road segments
+                    potential_roads = network_df.iloc[
+                        list(network_df.sindex.intersection(hazard_geom.bounds))]
+                    print("found", len(potential_roads), "roads")
 
-                    fh.flush()
+                    if len(potential_roads):
+                        for road in potential_roads.itertuples():
+                            print(road.ID, hazard_n)
+                            if road.geometry.intersects(hazard_geom):
+                                print("intersects")
+                                intersection_geom = road.geometry.intersection(hazard_geom)
+                                print("done intersection")
+                                w.writerow({
+                                    'road_id': road.ID,
+                                    'hazard_id': hazard_n,
+                                    'name': road.NAME,
+                                    'length': intersection_geom.length
+                                })
+                                intersections.append({
+                                    'road_id': road.ID,
+                                    'hazard_id': hazard_n,
+                                    'name': road.NAME,
+                                    'length': intersection_geom.length,
+                                    'geometry': intersection_geom
+                                })
+
+                        fh.flush()
 
         # Write intersection data
         fname = os.path.join(
