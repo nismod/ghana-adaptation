@@ -31,8 +31,6 @@ def main():
 
     for hazard_path in hazard_paths:
         hazard_id = os.path.basename(hazard_path).replace(".shp", "")
-        # if "medium" in hazard_id: # DEBUG
-        #     continue
 
         print("Processing", hazard_id)
 
@@ -52,9 +50,6 @@ def main():
             w.writeheader()
 
             for hazard_n, hazard in enumerate(hazard_df.itertuples()):
-                # if hazard_n != 133485: # DEBUG
-                #     continue
-
                 print("considering", hazard_n)
                 if hazard.geometry.geom_type == 'MultiPolygon':
                     geoms = [p for p in hazard.geometry]
