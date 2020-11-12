@@ -24,14 +24,13 @@ def main():
         os.path.join(base_path, 'data', 'hazard_fl_pres', '*.shp'))
 
     network_path = os.path.join(
-        base_path, 'data', 'infrastructure_pres', 'GHA_highway.shp')
+        base_path, 'data', 'infrastructure_pres', 'GHA_airports.shp')
 
     # Reading infrastructure network, convert to projected CRS
     network_df = geopandas.read_file(network_path).to_crs(epsg=epsg_code)
 
     for hazard_path in hazard_paths:
         hazard_id = os.path.basename(hazard_path).replace(".shp", "")
-
         print("Processing", hazard_id)
 
         # Reading hazard outlines
@@ -43,14 +42,15 @@ def main():
         # Do intersection
         intersections = []
         csv_fname = os.path.join(
-            base_path, 'results', 'exposure', f"roads__{hazard_id}.csv")
+            base_path, 'results', 'exposure', f"air__{hazard_id}.csv")
 
         with open(csv_fname, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('road_id', 'hazard_id', 'name', 'length', 'geom'))
+            w = csv.DictWriter(fh, fieldnames=('air_id', 'hazard_id', 'name', 'length', 'geom'))
             w.writeheader()
 
             for hazard_n, hazard in enumerate(hazard_df.itertuples()):
                 print("considering", hazard_n)
+
                 if hazard.geometry.geom_type == 'MultiPolygon':
                     geoms = [p for p in hazard.geometry]
                 else:
@@ -63,39 +63,37 @@ def main():
                         hazard_geom = hazard_geom.buffer(0)
                         print("fixed", hazard_n)
 
-                    # Use spatial index to find candidate road segments
-                    potential_roads = network_df.iloc[
+                    # Use spatial index to find candidate air segments
+                    potential_airports = network_df.iloc[
                         list(network_df.sindex.intersection(hazard_geom.bounds))]
-                    print("found", len(potential_roads), "roads")
+                    print(len(potential_airports), "airports may intersect", hazard_n)
 
-                    if len(potential_roads):
-                        for road in potential_roads.itertuples():
-                            print(road.ID, hazard_n)
-                            if road.geometry.intersects(hazard_geom):
+                    if len(potential_airports):
+                        for air in potential_airports.itertuples():
+                            print(air.ID, hazard_n)
+                            if air.geometry.intersects(hazard_geom):
                                 print("intersects")
-                                intersection_geom = road.geometry.intersection(hazard_geom)
-                                print("done intersection")
                                 w.writerow({
-                                    'road_id': road.ID,
+                                    'air_id': air.ID,
                                     'hazard_id': hazard_n,
-                                    'name': road.NAME,
-                                    'length': intersection_geom.length
+                                    'name': air.NAME
                                 })
                                 intersections.append({
-                                    'road_id': road.ID,
+                                    'air_id': air.ID,
                                     'hazard_id': hazard_n,
-                                    'name': road.NAME,
-                                    'length': intersection_geom.length,
-                                    'geometry': intersection_geom
+                                    'name': air.NAME,
+                                    'geometry': air.geometry
                                 })
 
                         fh.flush()
 
         # Write intersection data
-        fname = os.path.join(
-            base_path, 'results', 'exposure', f"roads__{hazard_id}.gpkg")
-        intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
-        intersections_df.to_file(fname, driver="GPKG")
+        if intersections:
+            fname = os.path.join(
+                base_path, 'results', 'exposure', f"air__{hazard_id}.gpkg")
+            intersections_df = geopandas.GeoDataFrame(intersections) \
+                .set_crs(epsg=epsg_code)
+            intersections_df.to_file(fname, driver="GPKG")
 
 
 def load_config():
