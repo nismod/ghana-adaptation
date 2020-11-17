@@ -72,7 +72,7 @@ def main():
                         # Use spatial index to find candidate network segments
                         potential_networks = network_df.iloc[
                             list(network_df.sindex.intersection(hazard_geom.bounds))]
-                        print("found", len(potential_networks), "network")
+                        print("found", len(potential_networks), {network_id})
 
                         if len(potential_networks):
                             for network in potential_networks.itertuples():
@@ -84,7 +84,7 @@ def main():
                                     w.writerow({
                                         'network_id': network.ID,
                                         'hazard_id': hazard_n,
-                                        'name': network.NAME,
+                                        'name': network.NAME
                                     })
                                     intersections.append({
                                         'network_id': network.ID,
@@ -96,10 +96,13 @@ def main():
                             fh.flush()
 
          # Write intersection data
-            fname = os.path.join(
-                base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
-            intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
-            intersections_df.to_file(fname, driver="GPKG")
+            if intersections:
+                fname = os.path.join(
+                    base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
+                intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
+                intersections_df.to_file(fname, driver="GPKG")
+            else:
+                 print ('no intersections found')
 
 
 def load_config():
