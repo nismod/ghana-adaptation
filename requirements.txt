@@ -1,2 +1,6 @@
+cartopy
 geopandas
+matplotlib
+pandas
+rtree
 tqdm

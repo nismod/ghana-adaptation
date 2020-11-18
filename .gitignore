@@ -3,6 +3,7 @@
 
 # Python
 *.egg-info
+.eggs
 __pycache__
 
 # Config
