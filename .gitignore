@@ -1,3 +1,10 @@
+# Notebook checkpoints
 .ipynb_checkpoints
-config.json
+
+# Python
+*.egg-info
+__pycache__
+
+# Config
 .vscode
+config.json
