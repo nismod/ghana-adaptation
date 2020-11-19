@@ -21,10 +21,10 @@ def main():
 
     # Setting up the paths
     hazard_paths = glob.glob(
-        os.path.join(base_path, 'data', 'hazards','flood', '*.gpkg'))
+        os.path.join(base_path, 'data', 'hazards','landslides', '*.gpkg'))
 
     network_paths = glob.glob(
-        os.path.join(base_path, 'data', 'infrastructure','Networks', '*.gpkg'))
+        os.path.join(base_path, 'data', 'nature','Polygons', '*.gpkg'))
 
     for hazard_path in hazard_paths:
         hazard_id = os.path.basename(hazard_path).replace(".gpkg", "")
@@ -51,8 +51,8 @@ def main():
             csv_fname = os.path.join(
                 base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.csv")
 
-            with open(csv_fname, 'w', encoding='utf-8') as fh:
-                w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'length', 'geom'))
+            with open(csv_fname, 'w') as fh:
+                w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'area', 'geom'))
                 w.writeheader()
 
                 for hazard_n, hazard in enumerate(hazard_df.itertuples()):
@@ -85,13 +85,13 @@ def main():
                                         'network_id': network.ID,
                                         'hazard_id': hazard_n,
                                         'name': network.NAME,
-                                        'length': intersection_geom.length
+                                        'area': intersection_geom.area
                                     })
                                     intersections.append({
                                         'network_id': network.ID,
                                         'hazard_id': hazard_n,
                                         'name': network.NAME,
-                                        'length': intersection_geom.length,
+                                        'area': intersection_geom.area,
                                         'geometry': intersection_geom
                                     })
 
@@ -104,7 +104,7 @@ def main():
                 intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
                 intersections_df.to_file(fname, driver="GPKG")
             else:
-                print ('no intersections found')
+                 print ('no intersections found')
 
 
 def load_config():
