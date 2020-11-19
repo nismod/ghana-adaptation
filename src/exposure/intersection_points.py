@@ -21,7 +21,7 @@ def main():
 
     # Setting up the paths
     hazard_paths = glob.glob(
-        os.path.join(base_path, 'data', 'hazards','drought', '*.gpkg'))
+        os.path.join(base_path, 'data', 'hazards','flood', '*.gpkg'))
 
     network_paths = glob.glob(
         os.path.join(base_path, 'data', 'infrastructure','Points', '*.gpkg'))

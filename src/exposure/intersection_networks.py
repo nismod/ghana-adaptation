@@ -51,7 +51,7 @@ def main():
             csv_fname = os.path.join(
                 base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.csv")
 
-            with open(csv_fname, 'w', encoding='utf-8') as fh:
+            with open(csv_fname, 'w') as fh:
                 w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'length', 'geom'))
                 w.writeheader()
 
@@ -72,7 +72,7 @@ def main():
                         # Use spatial index to find candidate network segments
                         potential_networks = network_df.iloc[
                             list(network_df.sindex.intersection(hazard_geom.bounds))]
-                        print("found", len(potential_networks), {network_id})
+                        print("found", len(potential_networks), "network")
 
                         if len(potential_networks):
                             for network in potential_networks.itertuples():
@@ -98,13 +98,10 @@ def main():
                             fh.flush()
 
          # Write intersection data
-            if intersections:
-                fname = os.path.join(
-                    base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
-                intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
-                intersections_df.to_file(fname, driver="GPKG")
-            else:
-                print ('no intersections found')
+            fname = os.path.join(
+                base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
+            intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
+            intersections_df.to_file(fname, driver="GPKG")
 
 
 def load_config():
