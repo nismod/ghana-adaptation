@@ -98,10 +98,13 @@ def main():
                             fh.flush()
 
          # Write intersection data
-            fname = os.path.join(
-                base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
-            intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
-            intersections_df.to_file(fname, driver="GPKG")
+            if intersections:
+                fname = os.path.join(
+                    base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
+                intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
+                intersections_df.to_file(fname, driver="GPKG")
+            else:
+                print ('no intersections found')
 
 
 def load_config():
