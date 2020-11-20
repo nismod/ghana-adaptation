@@ -24,7 +24,7 @@ def main():
         os.path.join(base_path, 'data', 'hazards','flood', '*.gpkg'))
 
     network_paths = glob.glob(
-        os.path.join(base_path, 'data', 'infrastructure','Points', '*.gpkg'))
+        os.path.join(base_path, 'data', 'nature','Points', 'pp_opr', '*.gpkg'))
 
     for hazard_path in hazard_paths:
         hazard_id = os.path.basename(hazard_path).replace(".gpkg", "")
