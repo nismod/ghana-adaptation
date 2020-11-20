@@ -51,7 +51,7 @@ def main():
             csv_fname = os.path.join(
                 base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.csv")
 
-            with open(csv_fname, 'w') as fh:
+            with open(csv_fname, 'w', encoding="utf-8") as fh:
                 w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'length', 'geom'))
                 w.writeheader()
 
