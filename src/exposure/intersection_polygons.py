@@ -21,7 +21,7 @@ def main():
 
     # Setting up the paths
     hazard_paths = glob.glob(
-        os.path.join(base_path, 'data', 'hazards','flood', '*.gpkg'))
+        os.path.join(base_path, 'data', 'hazards','landslides', '*.gpkg'))
 
     network_paths = glob.glob(
         os.path.join(base_path, 'data', 'nature','Polygons', '*.gpkg'))
@@ -52,7 +52,7 @@ def main():
                 base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.csv")
 
             with open(csv_fname, 'w', encoding="utf-8") as fh:
-                w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'length', 'geom'))
+                w = csv.DictWriter(fh, fieldnames=('network_id', 'hazard_id', 'name', 'area', 'geom'))
                 w.writeheader()
 
                 for hazard_n, hazard in enumerate(hazard_df.itertuples()):
@@ -98,10 +98,13 @@ def main():
                             fh.flush()
 
          # Write intersection data
-            fname = os.path.join(
-                base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
-            intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
-            intersections_df.to_file(fname, driver="GPKG")
+            if intersections:
+                fname = os.path.join(
+                    base_path, 'results', 'exposure', f"{network_id}__{hazard_id}.gpkg")
+                intersections_df = geopandas.GeoDataFrame(intersections).set_crs(epsg=epsg_code)
+                intersections_df.to_file(fname, driver="GPKG")
+            else:
+                print ('no intersections found')
 
 
 def load_config():
