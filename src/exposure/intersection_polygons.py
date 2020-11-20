@@ -85,13 +85,13 @@ def main():
                                         'network_id': network.ID,
                                         'hazard_id': hazard_n,
                                         'name': network.NAME,
-                                        'length': intersection_geom.length
+                                        'area': intersection_geom.area
                                     })
                                     intersections.append({
                                         'network_id': network.ID,
                                         'hazard_id': hazard_n,
                                         'name': network.NAME,
-                                        'length': intersection_geom.length,
+                                        'area': intersection_geom.area,
                                         'geometry': intersection_geom
                                     })
 
