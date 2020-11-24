@@ -56,12 +56,12 @@ if __name__ == '__main__':
     # CSV input
     csv_path = os.path.join(
         base_path, 'results', 'proximity_results',
-        'population_gha_2019-07-01_proximity_distance.csv')
+        'population_gha_2019-07-01_proximity.csv')
 
     # GeoTIFF output
     tif_path = os.path.join(
         base_path, 'results', 'proximity_results',
-        'population_gha_2019-07-01_proximity_distance.tif')
+        'population_gha_2019-07-01_proximity.tif')
 
     convert_csv_to_tiff(
         template_path, csv_path, tif_path,
