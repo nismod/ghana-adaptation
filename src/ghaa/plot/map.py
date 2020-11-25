@@ -7,8 +7,7 @@ import matplotlib.colors
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import rasterio
-import rasterio.plot
-import rasterio.windows
+import rioxarray
 import shapely.geometry
 
 
@@ -30,66 +29,44 @@ def get_axes(extent=(-3.82, 1.82, 4.37, 11.51)):
     return ax
 
 
-def get_axes_for_raster():
-    """Plain Axes object - must project anything before plotting
-    (no cartopy convenience, but this lets GeoPandas)
-    """
-    return plt.axes([0.025, 0.025, 0.95, 0.95])
-
-
-def plot_raster(ax, tif_path, base_path, extent=(-3.82, 1.82, 4.37, 11.51),
-                cmap='viridis', plot_regions=False):
+def plot_raster(ax, tif_path, cmap='viridis', levels=None, colors=None,
+                clip_extent=None):
     """Plot raster with vectors/labels
     """
-    # Unpack extent
-    left, bottom, right, top = extent
+    # Open raster
+    ds = rioxarray.open_rasterio(tif_path, mask_and_scale=True)
+    if clip_extent is not None:
+        left, right, bottom, top = clip_extent
+        ds = ds.rio.clip_box(
+            minx=left,
+            miny=bottom,
+            maxx=right,
+            maxy=top,
+        )
 
-    # Open raster, read window
-    with rasterio.open(tif_path) as src:
-        window = rasterio.windows.from_bounds(
-            left, bottom, right, top, src.transform)
-        rst = src.read(1, window=window)
+    # Check raster CRS
+    with rasterio.open(tif_path) as da:
+        crs_code = da.crs.to_epsg()
+
+    if crs_code == 4326:
+        crs = ccrs.PlateCarree()
+    else:
+        crs = ccrs.epsg(crs_code)
 
     # Plot raster
-    rasterio.plot.show(rst, cmap=cmap, ax=ax, transform=src.window_transform(window))
-
-    # Set up colorbar
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="3%", pad=0.09)
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=rst.max())
-    mappable = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
-    fig = ax.figure
-    fig.colorbar(mappable, cax=cax)
-
-    # Read vectors
-    states = geopandas.read_file(
-        os.path.join(base_path, 'data', 'admin', 'GHA_admin0.gpkg')) \
-        .to_crs(src.crs)
-
-    lakes = geopandas.read_file(
-        os.path.join(base_path, 'data', 'nature', 'Polygons', 'GHA_lakes.gpkg')) \
-        .to_crs(src.crs)
-
-    # Polygon for clipping
-    bbpoly = shapely.geometry.box(left, bottom, right, top)
-
-    # Clip vectors
-    states = geopandas.clip(states, bbpoly)
-    lakes = geopandas.clip(lakes, bbpoly)
-
-    # Plot vectors
-    states.plot(ax=ax, facecolor='#00000000', edgecolor='#ffffff')
-    lakes.plot(ax=ax, edgecolor='none', facecolor='#87cefa', zorder=1)
-
-    if plot_regions:
-        regions = geopandas.read_file(
-            os.path.join(base_path, 'data', 'admin', 'GHA_admin1.gpkg')) \
-            .to_crs(src.crs)
-        regions = geopandas.clip(regions, bbpoly)
-        regions.plot(ax=ax, edgecolor='#ffffff', facecolor='#00000000', zorder=2)
-
-    # Set axis off
-    ax.axis('off')
+    if levels is not None and colors is not None:
+        ds.plot(
+            ax=ax,
+            levels=levels,
+            colors=colors,
+            transform=crs
+        )
+    else:
+        ds.plot(
+            ax=ax,
+            cmap=cmap,
+            transform=crs
+        )
 
     return ax
 
@@ -103,7 +80,7 @@ def plot_basemap(ax, data_path, ax_crs=3857, plot_regions=False):
     lakes = geopandas.read_file(
         os.path.join(data_path, 'nature', 'Polygons', 'GHA_lakes.gpkg')).to_crs(ax_crs)
 
-    states.plot(ax=ax, edgecolor='#ffffff', facecolor='#e4e4e3', zorder=1)
+    states.plot(ax=ax, edgecolor='#ffffff', facecolor='#e4e4e300', zorder=1)
 
     if plot_regions:
         regions = geopandas.read_file(
