@@ -11,11 +11,14 @@ if __name__ == '__main__':
     # GeoTIFF to plot
     tif_path = os.path.join(
         base_path, 'results', 'proximity_results',
-        'population_gha_2019-07-01_proximity_distance.tif')
+        'population_gha_2019-07-01_proximity_downsampled.tif')
     ax = get_axes_for_raster()
+    print("got axes")
     plot_raster(ax, tif_path, base_path)
+    print("plotted")
     plt.savefig('test_access.png')
-
+    print("saved")
+    exit()
     # Accra
     left = -0.5
     bottom = 5.4
