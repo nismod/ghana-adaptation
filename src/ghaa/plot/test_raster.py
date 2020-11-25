@@ -28,6 +28,10 @@ if __name__ == '__main__':
     print("Plotting", tif_path)
     print("to image", png_path)
     ax = get_axes()
-    plot_raster(ax, tif_path, base_path)
+    plot_raster(
+        ax, tif_path,
+        levels=[0, 0.01, 0.1, 1, 10],
+        colors=['#fde725', '#20a378', '#287d8e', '#481567', '#000000']
+    )
     plot_basemap(ax, os.path.join(base_path, 'data'))
     plt.savefig(png_path)
