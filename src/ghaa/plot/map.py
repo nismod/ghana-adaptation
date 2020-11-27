@@ -1,9 +1,14 @@
-import csv
 import os
 
 import cartopy.crs as ccrs
 import geopandas
+import matplotlib.cm
+import matplotlib.colors
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import rasterio
+import rioxarray
+import shapely.geometry
 
 
 def save_fig(output_filename):
@@ -13,10 +18,6 @@ def save_fig(output_filename):
 def get_axes(extent=(-3.82, 1.82, 4.37, 11.51)):
     """Get map axes
     """
-    x0, x1, y0, y1 = extent
-    cx = x0 + ((x1 - x0) / 2)
-    cy = y0 + ((y1 - y0) / 2)
-    ax_proj = ccrs.TransverseMercator(central_longitude=cx, central_latitude=cy, approx=True)
     ax_proj = ccrs.epsg(3857)
 
     plt.figure(figsize=(4, 6), dpi=150)
@@ -24,6 +25,48 @@ def get_axes(extent=(-3.82, 1.82, 4.37, 11.51)):
     proj = ccrs.PlateCarree()
     ax.set_extent(extent, crs=proj)
     ax.patch.set_facecolor('#bfc0bf')
+
+    return ax
+
+
+def plot_raster(ax, tif_path, cmap='viridis', levels=None, colors=None,
+                clip_extent=None):
+    """Plot raster with vectors/labels
+    """
+    # Open raster
+    ds = rioxarray.open_rasterio(tif_path, mask_and_scale=True)
+    if clip_extent is not None:
+        left, right, bottom, top = clip_extent
+        ds = ds.rio.clip_box(
+            minx=left,
+            miny=bottom,
+            maxx=right,
+            maxy=top,
+        )
+
+    # Check raster CRS
+    with rasterio.open(tif_path) as da:
+        crs_code = da.crs.to_epsg()
+
+    if crs_code == 4326:
+        crs = ccrs.PlateCarree()
+    else:
+        crs = ccrs.epsg(crs_code)
+
+    # Plot raster
+    if levels is not None and colors is not None:
+        ds.plot(
+            ax=ax,
+            levels=levels,
+            colors=colors,
+            transform=crs
+        )
+    else:
+        ds.plot(
+            ax=ax,
+            cmap=cmap,
+            transform=crs
+        )
 
     return ax
 
@@ -37,7 +80,7 @@ def plot_basemap(ax, data_path, ax_crs=3857, plot_regions=False):
     lakes = geopandas.read_file(
         os.path.join(data_path, 'nature', 'Polygons', 'GHA_lakes.gpkg')).to_crs(ax_crs)
 
-    states.plot(ax=ax, edgecolor='#ffffff', facecolor='#e4e4e3', zorder=1)
+    states.plot(ax=ax, edgecolor='#ffffff', facecolor='#e4e4e300', zorder=1)
 
     if plot_regions:
         regions = geopandas.read_file(
