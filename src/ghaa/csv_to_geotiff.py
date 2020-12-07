@@ -11,7 +11,7 @@ from ghaa.config import load_config
 
 
 def convert_csv_to_tiff(template_path, csv_path, tif_path, value_col='val',
-                        x_col='x', y_col='y', fn=None):
+                        x_col='x', y_col='y', extra_cols=None, fn=None):
     """Convert CSV to GeoTIFF
     """
     with rasterio.open(template_path) as ds:
@@ -20,8 +20,11 @@ def convert_csv_to_tiff(template_path, csv_path, tif_path, value_col='val',
 
     arr = np.full(ds.shape, -999.0)
 
+    if extra_cols is None:
+        extra_cols = []
+
     df = pandas.read_csv(
-        csv_path, usecols=[value_col, x_col, y_col])
+        csv_path, usecols=[value_col, x_col, y_col] + extra_cols)
 
     if fn is not None:
         df[value_col] = df.apply(fn, axis=1)
@@ -104,5 +107,6 @@ if __name__ == '__main__':
     convert_csv_to_tiff(
         template_path, csv_path, tif_path,
         value_col=value_col,
-        fn=fix_zero_access
+        fn=fix_zero_access,
+        extra_cols=['access']
     )
