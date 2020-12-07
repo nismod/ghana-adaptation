@@ -11,7 +11,7 @@ from ghaa.config import load_config
 
 
 def convert_csv_to_tiff(template_path, csv_path, tif_path, value_col='val',
-                        x_col='x', y_col='y'):
+                        x_col='x', y_col='y', fn=None):
     """Convert CSV to GeoTIFF
     """
     with rasterio.open(template_path) as ds:
@@ -22,6 +22,9 @@ def convert_csv_to_tiff(template_path, csv_path, tif_path, value_col='val',
 
     df = pandas.read_csv(
         csv_path, usecols=[value_col, x_col, y_col])
+
+    if fn is not None:
+        df[value_col] = df.apply(fn, axis=1)
 
     # Enumerate columns to use index in itertuples
     idx = {name: i for i, name in enumerate(df.columns, start=1)}
@@ -64,7 +67,7 @@ if __name__ == '__main__':
         value_col = sys.argv[2]
     except:
         # Column
-        value_col = 'time_hr'
+        value_col = 'length_km'
 
     try:
         tif_path = sys.argv[3]
@@ -92,7 +95,14 @@ if __name__ == '__main__':
     print("Output TIF", tif_path)
     print("Template TIF", template_path)
 
+    def fix_zero_access(row):
+        if row.access == 0:
+            return 100
+        else:
+            return row.length_km
+
     convert_csv_to_tiff(
         template_path, csv_path, tif_path,
-        value_col=value_col
+        value_col=value_col,
+        fn=fix_zero_access
     )
